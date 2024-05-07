@@ -5,8 +5,10 @@ from typing import Optional
 import dotenv
 import httpx
 
+# Load environment variables
 dotenv.load_dotenv()
 
+# Constants
 IMAGE_LINK: str = "https://storage.googleapis.com/amanda-public-bucket/tim_young.png"
 IMAGE_TEXT: str = (
     "hi, i'm tim young from eniac ventures. would love to hear more about your startup."
@@ -15,14 +17,13 @@ DID_API: str = "https://api.d-id.com"
 DID_TALKS_API: str = f"{DID_API}/talks"
 DID_API_KEY: Optional[str] = os.environ.get("DID_API_KEY")
 
-
+# Check API key is set
 if not DID_API_KEY:
     raise Exception("DID_API_KEY environment variable not set")
 
-
+# Setup HTTP client
 CLIENT: httpx.Client = httpx.Client()
 CLIENT.headers["Authorization"] = f"Basic {DID_API_KEY}"
-
 
 def generate_talk_create_request(image_url: str, text: str) -> dict:
     """Generate a dictionary for use in a JSON request to the d-id/talks API."""
@@ -54,7 +55,6 @@ def send_talk_create_request(image_url: str, text: str) -> dict:
         "object": "talk"
     }
     """
-
 
 def send_talk_get_request(talk_id: str) -> dict:
     """Send a GET talk request to the d-id/talks API."""
@@ -137,7 +137,6 @@ def send_talk_get_request(talk_id: str) -> dict:
     we want started_at, status, result_url, id, duration, created_at
     """
 
-
 def wait_send_talk_get_request(
     talk_id: str, sleep: int = 4, max_sleep: int = 600
 ) -> dict:
@@ -154,17 +153,21 @@ def wait_send_talk_get_request(
 
     return response_json
 
-
 def parse_talk_id(response: dict) -> str:
     """Get the talk ID from a response to a talk request."""
     return response["id"]
-
 
 def parse_talk_result_url(response: dict) -> str:
     """Get the talk result URL from a response to a talk request."""
     return response["result_url"]
 
+# Main function only for direct script execution, not when imported
+if __name__ == "__main__":
+    # Example usage
+    resp = send_talk_create_request(IMAGE_LINK, "https://storage.googleapis.com/amanda-public-bucket/audio.mp3")
+    print(resp)
 
+"""
 def main() -> None:
     talk_created_response: dict = send_talk_create_request(
         image_url=IMAGE_LINK, text=IMAGE_TEXT
@@ -179,3 +182,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+"""
