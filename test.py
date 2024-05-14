@@ -6,6 +6,7 @@ import dotenv
 import httpx
 import json
 import urllib.parse
+import requests
 
 # Load environment variables
 dotenv.load_dotenv()
@@ -37,13 +38,16 @@ def send_talk_create_request(image_url, text):
     #external_api_keys_encoded = urllib.parse.quote(external_api_keys)
 
     headers = {
-        'Authorization': f'Basic {DID_API_KEY}',  # Use Basic Auth for D-ID
+        "accept": "application/json",
+        "x-api-key-external": "{\"elevenlabs\": \"3d4e59e1b27a2e2d5215405ee6d6109e\"}",
+        "content-type": "application/json",
+        "authorization": "Basic WVcxaGJtUmhiR1ZwWjJod1FHZHRZV2xzTG1OdmJROmZmWktGR2pVM2VDWGl6S2V1OHdHMQ=="
+        #'Authorization': f'Basic {DID_API_KEY}',  # Use Basic Auth for D-ID
         #'x-api-key-external': external_api_keys,  # URL encoded JSON
-        'Content-Type': 'application/json'
+        #'Content-Type': 'application/json'
     }
 
     data = {
-        "source_url": image_url,
         "script": {
             #"type": "audio",
 	        #"audio_url": "https://storage.googleapis.com/amanda-public-bucket/audio.mp3"
@@ -51,20 +55,51 @@ def send_talk_create_request(image_url, text):
             "input": text,
             "provider": {
                 "type": "elevenlabs",
-                #"voice_id": "YPUnTiFK8hDCl5XNINqt"
-                "voice_id": "XTfTIu6Imiu6wQ6T6eZH"
+                "voice_id": "YPUnTiFK8hDCl5XNINqt"
             }
-        }
+        },
+        "source_url": image_url
     }
-    response = httpx.post(DID_TALKS_URL, json=data, headers=headers)
+    
+    #this is what the response should look like:
+    """
+    {
+        "id": "tlk_K26q74SMAbZjL-F3RwvdG",
+        "created_at": "2024-05-14T02:21:58.595Z",
+        "created_by": "google-oauth2|113929601480866265062",
+        "status": "created",
+        "object": "talk"
+    }
+    """
+
+    print("did url", DID_TALKS_URL)
+    print("json data", data)
+    print("headers", headers)
+
+
+    #response = httpx.post(DID_TALKS_URL, json=data, headers=headers)
+    response = requests.post(DID_TALKS_URL, json=data, headers=headers)
+    print("test.py: response immed after post", response)
     response_data = response.json()
     print("test.py: send talk create request: i successfully sent a call to d-id")
     print("test.py: response.text", response.text)
     return response.json()
 
 def send_talk_get_request(talk_id: str) -> dict:
-    response_data: httpx.Response = CLIENT.get(f"{DID_TALKS_URL}/{talk_id}")
-    response_json: dict = response_data.json()
+    #response_data: httpx.Response = CLIENT.get(f"{DID_TALKS_URL}/{talk_id}")
+    #response_json: dict = response_data.json()
+
+
+    url = 'https://api.d-id.com/talks/(f"{talk_id}")'
+    get_headers = {
+        "accept": "application/json",
+        "authorization": "Basic WVcxaGJtUmhiR1ZwWjJod1FHZHRZV2xzTG1OdmJROmZmWktGR2pVM2VDWGl6S2V1OHdHMQ=="
+    }
+
+    response = requests.get(url, headers=get_headers)
+    print("test.py: get talk request url", url)
+    response_json: dict = response.json()
+
     keys: list[str] = [
         "started_at",
         "status",
@@ -74,14 +109,16 @@ def send_talk_get_request(talk_id: str) -> dict:
         "created_at",
     ]
     out: str = ", ".join([f"{k}: {v}" for k, v in response_json.items() if k in keys])
-    print("test.py: Received talk data:", out)
+    print("test.py: Received talk data:", response_json)
     return response_json
 
 def wait_send_talk_get_request(talk_id: str, sleep: int = 4, max_sleep: int = 600) -> dict:
     response_json: dict = send_talk_get_request(talk_id)
+
     current_sleep: int = 0
 
     while response_json["status"] != "done":
+        print("test.py: in the wait send talk get request while loop")
         if current_sleep >= max_sleep:
             raise Exception("Max sleep time exceeded")
         time.sleep(sleep)
