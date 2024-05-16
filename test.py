@@ -41,7 +41,7 @@ def send_talk_create_request(image_url, text):
         "accept": "application/json",
         "x-api-key-external": "{\"elevenlabs\": \"3d4e59e1b27a2e2d5215405ee6d6109e\"}",
         "content-type": "application/json",
-        "authorization": "Basic WVcxaGJtUmhiR1ZwWjJod1FHZHRZV2xzTG1OdmJROmZmWktGR2pVM2VDWGl6S2V1OHdHMQ=="
+        "authorization": "Basic " + DID_API_KEY
         #'Authorization': f'Basic {DID_API_KEY}',  # Use Basic Auth for D-ID
         #'x-api-key-external': external_api_keys,  # URL encoded JSON
         #'Content-Type': 'application/json'
@@ -90,10 +90,10 @@ def send_talk_get_request(talk_id: str) -> dict:
     #response_json: dict = response_data.json()
 
 
-    url = 'https://api.d-id.com/talks/(f"{talk_id}")'
+    url = 'https://api.d-id.com/talks/' + talk_id
     get_headers = {
         "accept": "application/json",
-        "authorization": "Basic WVcxaGJtUmhiR1ZwWjJod1FHZHRZV2xzTG1OdmJROmZmWktGR2pVM2VDWGl6S2V1OHdHMQ=="
+        "authorization": "Basic " + DID_API_KEY
     }
 
     response = requests.get(url, headers=get_headers)
