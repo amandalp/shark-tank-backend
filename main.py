@@ -1,9 +1,17 @@
+import os
+import dotenv
+from typing import Optional
 from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import test  # Importing the module we refactored test.py into
 
+# Load environment variables
+dotenv.load_dotenv()
+
 app = FastAPI()
+
+TIM_VOICE_ID: Optional[str] = os.environ.get("TIM_VOICE_ID")
 
 # Define a Pydantic model for incoming data
 class TalkRequest(BaseModel):
@@ -27,7 +35,7 @@ async def create_talk(request: TalkRequest):
         # Call the function to create a talk request
         print("main: image url:", request.image_url)
         print("main: text:", request.text)
-        create_response = test.send_talk_create_request(request.image_url, request.text)
+        create_response = test.send_talk_create_request(request.image_url, TIM_VOICE_ID, request.text)
         print("main: create reponse", create_response)
         talk_id = create_response.get("id")
         print("main: i successfully called send talk create request. talk ID:", talk_id)
