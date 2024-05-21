@@ -13,7 +13,6 @@ dotenv.load_dotenv()
 # Constants for D-ID
 DID_API_ENDPOINT = "https://api.d-id.com"
 DID_API_KEY: Optional[str] = os.environ.get("DID_API_KEY")
-
 ELEVEN_LABS_API_KEY: Optional[str] = os.environ.get("EL_API_KEY")
 
 # Check API key is set
@@ -39,8 +38,10 @@ def send_talk_create_request(image_url, voice_id, text, api_type):
         #Not sure I need this accept header?
         #"Accept": "audio/mpeg",
         "Content-Type": "application/json",
-        "xi-api-key": f"Basic {EL_API_KEY}",
+        "xi-api-key": ELEVEN_LABS_API_KEY,
     }
+    print("test api type:", api_type)
+    print("test el api key:", ELEVEN_LABS_API_KEY)
 
     if api_type == 'd-id':
         data = {
@@ -54,7 +55,7 @@ def send_talk_create_request(image_url, voice_id, text, api_type):
             "source_url": image_url,
         }
         response = requests.post(f"{DID_API_ENDPOINT}/talks", json=data, headers=headers_did)
-        print("Response from openai API:", response.text)
+        print("Response from DID API:", response.text)
     elif api_type == 'elevenlabs':
         data = {
             "text": text,
@@ -64,8 +65,13 @@ def send_talk_create_request(image_url, voice_id, text, api_type):
                 "similarity_boost": 0.5
             }
         }
-        response = requests.post("https://api.elevenlabs.io/v1/text-to-speech/voice_id/stream", json=data, headers=headers_elevenlabs)
-        print("Response from elevenlabs API:", response.text)
+        response = requests.post(f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream", json=data, headers=headers_elevenlabs, stream=True)
+        #print("Response from elevenlabs API:", response.text)
+        if response.status_code == 200:
+            return response.raw
+        else:
+            print("Error streaming audio:", response.text)
+            return None
 
     return response.json()
 
