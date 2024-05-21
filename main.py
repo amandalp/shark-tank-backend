@@ -17,6 +17,7 @@ TIM_VOICE_ID: Optional[str] = os.environ.get("TIM_VOICE_ID")
 class TalkRequest(BaseModel):
     image_url: str
     text: str
+    api_type: str #'d-id' or 'elevenlabs'
     # audio_url: str
 
 # Add CORS middleware to allow requests from your React frontend
@@ -33,10 +34,20 @@ app.add_middleware(
 async def create_talk(request: TalkRequest):
     try:
         # Call the function to create a talk request
+        print("main: API type:", request.api_type)
         print("main: image url:", request.image_url)
         print("main: text:", request.text)
-        create_response = test.send_talk_create_request(request.image_url, TIM_VOICE_ID, request.text)
+        create_response = test.send_talk_create_request(request.image_url, TIM_VOICE_ID, request.text, api_type=request.api_type)
         print("main: create reponse", create_response)
+
+        ###
+        #TODO: Add response handling for elevenlabs, not really sure what the response body is
+        #TODO: Also not sure if i should use the TTS endpoint or the streaming endpoint
+        #TTS endpoint: https://api.elevenlabs.io/v1/text-to-speech/voice_id
+        #Streaming endpoint: https://api.elevenlabs.io/v1/text-to-speech/voice_id/stream
+        ###
+
+        # response handling for d-id
         talk_id = create_response.get("id")
         print("main: i successfully called send talk create request. talk ID:", talk_id)
         

@@ -25,26 +25,50 @@ CLIENT: httpx.Client = httpx.Client()
 # CLIENT.headers["Authorization"] = f"Basic {DID_API_KEY}"
 
 
-def send_talk_create_request(image_url, voice_id, text):
+def send_talk_create_request(image_url, voice_id, text, api_type):
     external_api_keys = json.dumps({"elevenlabs": ELEVEN_LABS_API_KEY})
 
-    headers = {
+    headers_did = {
         "accept": "application/json",
         "x-api-key-external": external_api_keys,
         "content-type": "application/json",
         "authorization": f"Basic {DID_API_KEY}",
     }
 
-    data = {
-        "script": {
-            # "type": "audio",
-            # "audio_url": "https://storage.googleapis.com/amanda-public-bucket/audio.mp3"
-            "type": "text",
-            "input": text,
-            "provider": {"type": "elevenlabs", "voice_id": voice_id},
-        },
-        "source_url": image_url,
+    headers_elevenlabs = {
+        #Not sure I need this accept header?
+        #"Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": f"Basic {EL_API_KEY}",
     }
+
+    if api_type == 'd-id':
+        data = {
+            "script": {
+                # "type": "audio",
+                # "audio_url": "https://storage.googleapis.com/amanda-public-bucket/audio.mp3"
+                "type": "text", 
+                "input": text, 
+                "provider": {"type": "elevenlabs", "voice_id": voice_id}
+            },
+            "source_url": image_url,
+        }
+        response = requests.post(f"{DID_API_ENDPOINT}/talks", json=data, headers=headers_did)
+        print("Response from openai API:", response.text)
+    elif api_type == 'elevenlabs':
+        data = {
+            "text": text,
+            "model_id": "eleven_monolingual_v1",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.5
+            }
+        }
+        response = requests.post("https://api.elevenlabs.io/v1/text-to-speech/voice_id/stream", json=data, headers=headers_elevenlabs)
+        print("Response from elevenlabs API:", response.text)
+
+    return response.json()
+
 
     # this is what the response should look like:
     """
